@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Video Streaming</title>
+</head>
+<body>
+<h1>Live Video Streaming</h1>
+<video id="videoElement" controls autoplay style="width: 100%; height: auto;"></video>
+
+<script>
+    const videoElement = document.getElementById('videoElement');
+    const ws = new WebSocket('ws://localhost:8082/video-stream'); // Update with your WebSocket URL
+
+    let mediaSource = new MediaSource();
+    let sourceBuffer;
+    let queue = [];
+    let isAppending = false;
+
+    videoElement.src = URL.createObjectURL(mediaSource);
+
+    mediaSource.addEventListener('sourceopen', function() {
+        console.log('MediaSource opened');
+        try {
+            // Create SourceBuffer for MP4 format with video codec
+            sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"'); // Adjust codec if needed
+            sourceBuffer.mode = 'segments';
+            sourceBuffer.addEventListener('updateend', function() {
+                isAppending = false;
+                console.log('SourceBuffer updateend');
+                if (queue.length > 0) {
+                    appendNextChunk();
+                }
+            });
+        } catch (error) {
+            console.error('Error creating SourceBuffer:', error);
+        }
+    });
+
+    function appendNextChunk() {
+        if (!sourceBuffer || isAppending || mediaSource.readyState !== 'open') return;
+
+        isAppending = true;
+        const chunk = queue.shift(); // Get the next chunk from the queue
+        if (chunk) {
+            console.log('Appending buffer of size:', chunk.byteLength);
+            try {
+                sourceBuffer.appendBuffer(chunk);
+            } catch (error) {
+                console.error('Error appending buffer:', error);
+            }
+        }
+    }
+
+    ws.binaryType = 'arraybuffer'; // Set WebSocket to expect binary data
+
+    ws.onmessage = function(event) {
+        console.log('Received WebSocket message');
+
+        // Get the binary data directly
+        const byteArray = new Uint8Array(event.data);
+
+        console.log('Received byte array of size:', byteArray.byteLength);
+
+        // Add the binary data to the queue
+        queue.push(byteArray);
+
+        // Try to append data if SourceBuffer is ready
+        appendNextChunk();
+    };
+
+    ws.onopen = function() {
+        console.log('WebSocket connection established');
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket connection closed');
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+</script>
+</body>
+</html>
+
+
+
+
+
+<!--Kafka video streaming -->
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Live Video Stream</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--<h1>Live Video Stream</h1>-->
+<!--<video id="videoStream" controls autoplay style="width: 100%; max-width: 800px;">-->
+<!--    <source src="/video-stream" type="video/mp4">-->
+<!--    Your browser does not support the video tag.-->
+<!--</video>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Live Video Stream</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--<h1>Live Video Stream</h1>-->
+<!--<img id="videoStream" src="#" alt="Live Video" style="width: 100%; max-width: 800px;"/>-->
+<!--<script>-->
+<!--    function updateImage() {-->
+<!--        fetch('/video-stream')-->
+<!--            .then(response => response.text())-->
+<!--            .then(data => {-->
+<!--                document.getElementById('videoStream').src = data;-->
+<!--            })-->
+<!--            .catch(error => console.error('Error fetching video stream:', error));-->
+<!--    }-->
+
+<!--    setInterval(updateImage, 1); // Update every second-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->

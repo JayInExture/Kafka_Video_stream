@@ -1,0 +1,21 @@
+#spring:
+#  application:
+#  name: VideoConsumerService
+#
+#
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+#    consumer:
+#      group-id: video-group
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+#
+#kafka:
+#  topic: video-topic
+#
+#server:
+#  port: 8082
+#
